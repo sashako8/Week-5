@@ -36,10 +36,10 @@ module.exports.removePassword = async (email) => {
 
 module.exports.updatePassword = async (email, password) => {
     const user = await User.findOne({ email: email });
-    if (user) {
-        const newPassword = await bcrypt.hash(password, 10);
-        return User.update({ email: email, password: newPassword});
-    } else {
+    if (!user) {
         return false;
+    } else {
+        const newPassword = await bcrypt.hash(password, 10);
+        return User.update({ email: email }, { password: newPassword });
     }
 }

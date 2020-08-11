@@ -15,7 +15,6 @@ const isAuthorized = async (req, res, next) => {
             const user = jwt.verify(token, secret);
             if (user) {
                 req.user = user;
-                console.log(req.user);
                 next();
             } else {
                 res.sendStatus(401);
@@ -53,8 +52,7 @@ router.post("/", async (req, res, next) => {
             if (passwordsMatch) {
                 savedUser = await userDAO.removePassword(email);
                 try {
-                    const token = jwt.sign({ savedUser }, secret);
-                    console.log(token);
+                    const token = jwt.sign(savedUser.toJSON(), secret);
                     res.json({ token });
                 } catch (e) {
                     throw e;
@@ -69,7 +67,8 @@ router.post("/", async (req, res, next) => {
 })
 
 router.post("/password", isAuthorized, async (req, res, next) => {
-    const { email, password } = req.body;
+    const { password } = req.body;
+    const { email } = req.user;
     if (!password || password === "") {
         res.status(400).send('Please provide a password'); 
     } else if (req.headers.authorization.includes('BAD')) {
