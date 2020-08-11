@@ -1,23 +1,21 @@
 const { Router } = require("express");
 const router = Router();
+const jwt = require('jsonwebtoken');
+const secret = 'spongebob squarepants';
 
-const isAuthorized = (req, res, next) => {
-    if (req.headers.authorization) {
-        const secret = 'spongebob squarepants';
-        const token = req.headers.authorization;
-        req.token = jwt.sign(token, secret);
-        if (req.token) {
-            const user = userDAO.validateToken(req.token);
-            if (user) {
-                next();
-            } else {
+const isAuthorized = async (req, res, next) => {
+    const { authorization } = req.headers;
+    if (authorization) {
+        const token = authorization.split(' ')[1];
+        try {
+            const user = jwt.verify(token, secret);
+            req.user = decodedToken;
+            next();
+        } catch (e) {
                 res.sendStatus(401);
-            }
-        } else {
-            res.sendStatus(401);
-        } 
+        }
     } else {
-        res.sendStatus(401);
+            res.sendStatus(401);
     }
 }
 
@@ -29,10 +27,16 @@ const isAdmin = (req, res, next) => {
     }
 }
 
-router.post("/items", isAuthorized, isAdmin)
+router.post("/items", isAuthorized, isAdmin, async (req, res, next) => {
+    await itemDAO.create
+})
 
-router.put("/items/:id", isAuthorized, isAdmin)
+router.put("/items/:id", isAuthorized, isAdmin, async (req, res, next) => {
+    await itemDAO.getById
+})
 
-router.get("/items", isAuthorized, )
+router.get("/items", isAuthorized, async (req, res, next) => {
+    await itemDAO.getAll
+})
 
 module.exports = router;

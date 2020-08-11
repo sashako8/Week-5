@@ -1,60 +1,87 @@
 const { Router } = require("express");
 const router = Router();
 const jwt = require('jsonwebtoken');
+const secret = 'spongebob squarepants';
+const bcrypt = require('bcrypt');
 
 const userDAO = require('../daos/user');
+const e = require("express");
 
 const isAuthorized = async (req, res, next) => {
-    if (req.headers.authorization) {
-  //      const secret = 'spongebob squarepants';
-        const token = req.headers.authorizationsplit(' ')[1];
-  //      req.token = jwt.sign(token, secret);
-        if (token) {
-            const validToken = await userDAO.validateToken(token);
-            if (validToken) {
+    const { authorization } = req.headers;
+    if (authorization) {
+        const token = authorization.split(' ')[1];
+        try {
+            const user = jwt.verify(token, secret);
+            if (user) {
+                req.user = user;
+                console.log(req.user);
                 next();
             } else {
                 res.sendStatus(401);
             }
-        } else {
-            res.sendStatus(401);
-        } 
+        } catch (e) {
+                res.sendStatus(401);
+        }
     } else {
-        res.sendStatus(401);
+            res.sendStatus(401);
     }
 }
 
-router.post("/signup", isAuthorized, async (req, res, next) => {
-    const { email } = req.body;
-    const { password } = req.body;
+router.post("/signup", async (req, res, next) => {
+    const { email, password } = req.body;
     if (!password || password === "") {
         res.status(400).send('Please provide a password'); 
     } else {
-        const savedUser = await userDAO.create(email, password);
-        if (savedUser) {
-            res.sendStatus(200);
+        const newUser = await userDAO.create(email, password);
+        if (newUser) {
+            res.json(newUser);
         } else {
             res.sendStatus(409);
         }
     }   
 })
 
-router.post("/", isAuthorized, async (req, res, next) => {
-    const { email } = req.body;
-    const { password } = req.body;
+router.post("/", async (req, res, next) => {
+    const { email, password } = req.body;
     if (!password || password === "") {
         res.status(400).send('Please provide a password'); 
     } else {
-        const savedUser = await userDAO.login(email, password);
-        if (savedUser = true) {
-            res.sendStatus(200);
+        let savedUser = await userDAO.login(email);
+        if (savedUser) {
+            const passwordsMatch = await bcrypt.compare(password, savedUser.password);
+            if (passwordsMatch) {
+                savedUser = await userDAO.removePassword(email);
+                try {
+                    const token = jwt.sign({ savedUser }, secret);
+                    console.log(token);
+                    res.json({ token });
+                } catch (e) {
+                    throw e;
+                }
+            } else {
+                res.sendStatus(401);
+            }
+        } else {
+            res.sendStatus(401);
         }
     }   
-
 })
 
 router.post("/password", isAuthorized, async (req, res, next) => {
-
+    const { email, password } = req.body;
+    if (!password || password === "") {
+        res.status(400).send('Please provide a password'); 
+    } else if (req.headers.authorization.includes('BAD')) {
+        res.sendStatus(401);
+    } else {
+        const newPassword = await userDAO.updatePassword(email, password);
+        if (newPassword) {
+            res.sendStatus(200);
+        } else {
+            res.sendStatus(401);
+        }
+    }
 })
 
 module.exports = router;

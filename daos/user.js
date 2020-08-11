@@ -2,7 +2,6 @@ const mongoose = require('mongoose');
 
 const User = require('../models/user');
 const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
 
 module.exports = {};
 
@@ -11,38 +10,36 @@ module.exports.create = async (email, password) => {
     if (user) {
         return false;
     } else {
-        let role = ['user'];
-        newPassword = await bcrypt.hash(password, 10);
-        return User.create({ email: email, password: newPassword, role: role });
+        password = await bcrypt.hash(password, 10);
+        const user = await User.create({ email: email, password: password, roles: ['user'] });
+        return user;
     }
 }
 
-module.exports.validateToken = async (token) => {
-    const foundUser = await User.findOne({ token: token });
-    if (foundUser) {
-        return foundUser.email;
-    } else {
-        return false;
-    }
-}
-
-module.exports.login = async (email, password) => {
-    const user = await User.findOne({ email: email});
+module.exports.login = async (email) => {
+    let user = await User.findOne({ email: email });
     if (!user) {
         return false;
     } else {
-        const passwordsMatch = await bcrypt.compare(password, newPassword)
-        if (passwordsMatch) {
-            const secret = 'spongebob squarepants';
-            newToken = jwt.sign(token, secret);
-            return newToken;
-        } else {
-            return false;
-        }
+        return user;
     }
 }
 
-module.exports.updatePassword = async () => {
-
+module.exports.removePassword = async (email) => {
+    let user = await User.findOne({ email: email }, {password: 0});
+    if (!user) {
+        return false;
+    } else {
+        return user;
+    }
 }
 
+module.exports.updatePassword = async (email, password) => {
+    const user = await User.findOne({ email: email });
+    if (user) {
+        const newPassword = await bcrypt.hash(password, 10);
+        return User.update({ email: email, password: newPassword});
+    } else {
+        return false;
+    }
+}
