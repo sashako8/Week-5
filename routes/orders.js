@@ -3,14 +3,20 @@ const router = Router();
 const jwt = require('jsonwebtoken');
 const secret = 'spongebob squarepants';
 
+const orderDAO = require('../daos/order');
+
 const isAuthorized = async (req, res, next) => {
     const { authorization } = req.headers;
     if (authorization) {
         const token = authorization.split(' ')[1];
         try {
             const user = jwt.verify(token, secret);
-            req.user = decodedToken;
-            next();
+            if (user) {
+                req.user = user;
+                next();
+            } else {
+                res.sendStatus(401);
+            }
         } catch (e) {
                 res.sendStatus(401);
         }
@@ -19,15 +25,16 @@ const isAuthorized = async (req, res, next) => {
     }
 }
 
-router.post("/orders", async (req, res, next) => {
+
+router.post("/", async (req, res, next) => {
 
 })
 
-router.get("/orders", async (req, res, next) => {
+router.get("/", async (req, res, next) => {
     
 })
 
-router.get("/order/:id", async (req, res, next) => {
+router.get("/:id", async (req, res, next) => {
     
 })
 

@@ -4,14 +4,38 @@ const Item = require('../models/item');
 
 module.exports = {};
 
-module.exports.create = () => {
-    Item.create({});
+module.exports.create = (title, price) => {
+    const item = Item.create({ title: title, price: price});
+    if (item) {
+        return item;
+    } else {
+        return false;
+    }
 }
 
-module.exports.getById = () => {
-    Item.findOne({});
+module.exports.updateById = (itemId, title, price) => {
+    const item = Item.updateOne({ _id: itemId, title: title, price: price });
+    if (item) {
+        return item;
+    } else {
+        return false;
+    }
 }
 
 module.exports.getAll = () => {
-    Item.find({});
+    const items = Item.find();
+    if (items) {
+        return items;
+    } else {
+        return false;
+    }
+}
+
+module.exports.getById = (itemId) => {
+    const item = Item.findOne({ _id: itemId });
+    if (item) {
+        return item;
+    } else {
+        return false;
+    }
 }
