@@ -6,26 +6,7 @@ const bcrypt = require('bcrypt');
 
 const userDAO = require('../daos/user');
 const e = require("express");
-
-const isAuthorized = async (req, res, next) => {
-    const { authorization } = req.headers;
-    if (authorization) {
-        const token = authorization.split(' ')[1];
-        try {
-            const user = jwt.verify(token, secret);
-            if (user) {
-                req.user = user;
-                next();
-            } else {
-                res.sendStatus(401);
-            }
-        } catch (e) {
-                res.sendStatus(401);
-        }
-    } else {
-            res.sendStatus(401);
-    }
-}
+const { isAuthorized } = require('../middleware/middleware');
 
 router.post("/signup", async (req, res, next) => {
     const { email, password } = req.body;

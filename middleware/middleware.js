@@ -1,24 +1,29 @@
-export const isAuthorized = async (req, res, next) => {
-    if (req.headers.authorization) {
-        const secret = 'spongebob squarepants';
-        const token = req.headers.authorization.split(' ')[1];
-        if (token) {
-            const validToken = await userDAO.validateToken(token);
-            if (validToken) {
+const jwt = require('jsonwebtoken');
+const secret = 'spongebob squarepants';
+
+module.exports = {}
+
+module.exports.isAuthorized = async (req, res, next) => {
+    const { authorization } = req.headers;
+    if (authorization) {
+        const token = authorization.split(' ')[1];
+        try {
+            const user = jwt.verify(token, secret);
+            if (user) {
+                req.user = user;
                 next();
             } else {
                 res.sendStatus(401);
             }
-        } else {
-            res.sendStatus(401);
-        } 
+        } catch (e) {
+                res.sendStatus(401);
+        }
     } else {
-        res.sendStatus(401);
+            res.sendStatus(401);
     }
 }
-
-export const isAdmin = (req, res, next) => {
-    if (req.user.roles.inclues('admin')) {
+module.exports.isAdmin = (req, res, next) => {
+    if (req.user.roles.includes('admin')) {
         next();
     } else {
         res.sendStatus(403);

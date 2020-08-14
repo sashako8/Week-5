@@ -1,33 +1,13 @@
 const { Router } = require("express");
 const router = Router();
-const jwt = require('jsonwebtoken');
-const secret = 'spongebob squarepants';
 
 const orderDAO = require('../daos/order');
 const itemDAO = require('../daos/item');
+const { isAuthorized } = require('../middleware/middleware');
 
-const isAuthorized = async (req, res, next) => {
-    const { authorization } = req.headers;
-    if (authorization) {
-        const token = authorization.split(' ')[1];
-        try {
-            const user = jwt.verify(token, secret);
-            if (user) {
-                req.user = user;
-                next();
-            } else {
-                res.sendStatus(401);
-            }
-        } catch (e) {
-                res.sendStatus(401);
-        }
-    } else {
-            res.sendStatus(401);
-    }
-}
+router.use(isAuthorized);
 
-
-router.post("/", isAuthorized, async (req, res, next) => {
+router.post("/", async (req, res, next) => {
     const userId = req.user._id;
     const items = req.body;
     const total = await itemDAO.getTotal(items);
@@ -43,7 +23,7 @@ router.post("/", isAuthorized, async (req, res, next) => {
     }
 })
 
-router.get("/", isAuthorized, async (req, res, next) => {
+router.get("/", async (req, res, next) => {
     if (req.user.roles.includes('admin')) {
         const orders = await orderDAO.getAll();
         if (orders) {
@@ -62,7 +42,7 @@ router.get("/", isAuthorized, async (req, res, next) => {
     }
 })
 
-router.get("/:id", isAuthorized, async (req, res, next) => {
+router.get("/:id", async (req, res, next) => {
     const orderId = req.params.id;
     const order = await orderDAO.getById(orderId);
     if (req.user.roles.includes('admin')) {
